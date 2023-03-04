@@ -1,33 +1,55 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixpkgs = {
+      url = "github:nixos/nixpkgs/nixos-unstable";
+    };
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+    };
   };
-
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, flake-utils, ... }:
+  flake-utils.lib.eachDefaultSystem (system:
   let
-    system = "x86_64-linux";
-    pkgs = nixpkgs.legacyPackages.${system};
-  in
-  {
-    hello = "chat!";
-    packages.${system}.default = pkgs.poetry2nix.mkPoetryApplication {
+    pkgs = import nixpkgs {
+      inherit system;
+    };
+
+    pythonBuild = pkgs.poetry2nix.mkPoetryApplication {
       projectDir = self;
     };
 
-    devShells.${system}.default = pkgs.mkShellNoCC {
+    dockerImage = pkgs.dockerTools.buildImage {
+      name = "nix-python";
+      tag = "latest";
+      created = "now";
+      config = { Cmd = [ "${pythonBuild}/bin/start" ]; };
+    };
+
+    devShell = pkgs.mkShellNoCC {
+      name = "nix-python";
       shellHook = "echo Welcome to your Nix-powered development environment!";
-
-      IS_NIX_AWESOME = "YES!";
-
       packages = with pkgs; [
         (poetry2nix.mkPoetryEnv { projectDir = self; })
-        neofetch
+        sqlite
       ];
     };
 
-    apps.${system}.default = {
-      program = "${self.packages.${system}.default}/bin/start";
-      type = "app";
+  in {
+    packages = {
+      default = pythonBuild;
+      docker = dockerImage;
     };
-  };
+
+    devShells = {
+      default = devShell;
+    };
+
+    apps = {
+      default = {
+        program = "${pythonBuild}/bin/start";
+        type = "app";
+      };
+    };
+  }
+  );
 }
