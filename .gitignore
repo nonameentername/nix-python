@@ -1,2 +1,6 @@
+*.db
+*.lock
 .direnv
+__pycache__
+db
 result

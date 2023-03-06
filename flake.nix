@@ -30,6 +30,8 @@
       shellHook = "echo Welcome to your Nix-powered development environment!";
       packages = with pkgs; [
         (poetry2nix.mkPoetryEnv { projectDir = self; })
+        overmind
+        postgresql
         sqlite
       ];
     };
