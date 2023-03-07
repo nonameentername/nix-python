@@ -8,50 +8,55 @@
     };
   };
   outputs = { self, nixpkgs, flake-utils, ... }:
-  flake-utils.lib.eachDefaultSystem (system:
-  let
-    pkgs = import nixpkgs {
-      inherit system;
-    };
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
 
-    pythonBuild = pkgs.poetry2nix.mkPoetryApplication {
-      projectDir = self;
-    };
+        formatter = pkgs.nixpkgs-fmt;
 
-    dockerImage = pkgs.dockerTools.buildImage {
-      name = "nix-python";
-      tag = "latest";
-      created = "now";
-      config = { Cmd = [ "${pythonBuild}/bin/start" ]; };
-    };
+        pythonBuild = pkgs.poetry2nix.mkPoetryApplication {
+          projectDir = self;
+        };
 
-    devShell = pkgs.mkShellNoCC {
-      name = "nix-python";
-      shellHook = "echo Welcome to your Nix-powered development environment!";
-      packages = with pkgs; [
-        (poetry2nix.mkPoetryEnv { projectDir = self; })
-        overmind
-        postgresql
-        sqlite
-      ];
-    };
+        dockerImage = pkgs.dockerTools.buildImage {
+          name = "nix-python";
+          tag = "latest";
+          created = "now";
+          config = { Cmd = [ "${pythonBuild}/bin/start" ]; };
+        };
 
-  in {
-    packages = {
-      default = pythonBuild;
-      docker = dockerImage;
-    };
+        devShell = pkgs.mkShellNoCC {
+          name = "nix-python";
+          shellHook = "echo Welcome to your Nix-powered development environment!";
+          packages = with pkgs; [
+            (poetry2nix.mkPoetryEnv { projectDir = self; })
+            overmind
+            postgresql
+            sqlite
+          ];
+        };
 
-    devShells = {
-      default = devShell;
-    };
+      in
+      {
+        formatter = formatter;
 
-    apps = {
-      default = {
-        program = "${pythonBuild}/bin/start";
-        type = "app";
-      };
-    };
-  }
-  );
+        packages = {
+          default = pythonBuild;
+          docker = dockerImage;
+        };
+
+        devShells = {
+          default = devShell;
+        };
+
+        apps = {
+          default = {
+            program = "${pythonBuild}/bin/start";
+            type = "app";
+          };
+        };
+      }
+    );
 }

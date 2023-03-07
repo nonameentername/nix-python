@@ -1,4 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
+
+
+class Ping(BaseModel):
+    ping: str
 
 
 class ItemBase(BaseModel):
@@ -8,6 +12,9 @@ class ItemBase(BaseModel):
 
 class ItemCreate(ItemBase):
     pass
+
+    class Config:
+        extra = Extra.forbid
 
 
 class Item(ItemBase):
@@ -24,6 +31,9 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+
+    class Config:
+        extra = Extra.forbid
 
 
 class User(UserBase):
