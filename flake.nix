@@ -1,11 +1,7 @@
 {
   inputs = {
-    nixpkgs = {
-      url = "github:nixos/nixpkgs/nixos-unstable";
-    };
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-    };
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
   };
   outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
@@ -13,20 +9,16 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-
         formatter = pkgs.nixpkgs-fmt;
-
         pythonBuild = pkgs.poetry2nix.mkPoetryApplication {
           projectDir = self;
         };
-
         dockerImage = pkgs.dockerTools.buildImage {
           name = "nix-python";
           tag = "latest";
           created = "now";
           config = { Cmd = [ "${pythonBuild}/bin/start" ]; };
         };
-
         devShell = pkgs.mkShellNoCC {
           name = "nix-python";
           shellHook = "echo Welcome to your Nix-powered development environment!";
@@ -37,20 +29,16 @@
             sqlite
           ];
         };
-
       in
       {
         formatter = formatter;
-
         packages = {
           default = pythonBuild;
           docker = dockerImage;
         };
-
         devShells = {
           default = devShell;
         };
-
         apps = {
           default = {
             program = "${pythonBuild}/bin/start";
